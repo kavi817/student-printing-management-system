@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SDCKL Student Printing Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+    <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">SDCKL Student Printing Management System</h1>
+    </header>
+
+    <main class="w-full max-w-3xl bg-white rounded shadow p-6">
+        <section id="register" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Register Student</h2>
+            <form id="registerForm" class="space-y-4">
+                <div>
+                    <label for="studentId" class="block font-medium text-gray-700">Student ID</label>
+                    <input type="text" id="studentId" name="studentId" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label for="name" class="block font-medium text-gray-700">Name</label>
+                    <input type="text" id="name" name="name" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label for="email" class="block font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Register</button>
+            </form>
+            <div id="registerMessage" class="mt-4 text-sm"></div>
+        </section>
+
+        <section id="wallet" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Wallet Management</h2>
+            <form id="topupForm" class="space-y-4">
+                <div>
+                    <label for="walletStudentId" class="block font-medium text-gray-700">Student ID</label>
+                    <input type="number" id="walletStudentId" name="walletStudentId" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label for="topupAmount" class="block font-medium text-gray-700">Top-up Amount</label>
+                    <input type="number" id="topupAmount" name="topupAmount" min="0.01" step="0.01" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Top Up Wallet</button>
+            </form>
+            <div id="topupMessage" class="mt-4 text-sm"></div>
+        </section>
+
+        <section id="printJob" class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Submit Print Job</h2>
+            <form id="printJobForm" class="space-y-4">
+                <div>
+                    <label for="printStudentId" class="block font-medium text-gray-700">Student ID</label>
+                    <input type="number" id="printStudentId" name="printStudentId" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label for="documentName" class="block font-medium text-gray-700">Document Name</label>
+                    <input type="text" id="documentName" name="documentName" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label for="pages" class="block font-medium text-gray-700">Number of Pages</label>
+                    <input type="number" id="pages" name="pages" min="1" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <div>
+                    <label for="cost" class="block font-medium text-gray-700">Cost</label>
+                    <input type="number" id="cost" name="cost" min="0.01" step="0.01" required class="mt-1 block w-full border border-gray-300 rounded px-3 py-2" />
+                </div>
+                <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">Submit Print Job</button>
+            </form>
+            <div id="printJobMessage" class="mt-4 text-sm"></div>
+        </section>
+    </main>
+
+    <script>
+        const apiBase = 'http://localhost:5000';
+
+        // Register student
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentId = document.getElementById('studentId').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const res = await fetch(`${apiBase}/students`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({student_id: studentId, name, email})
+            });
+            const data = await res.json();
+            const msgEl = document.getElementById('registerMessage');
+            if (res.ok) {
+                msgEl.textContent = 'Student registered successfully!';
+                msgEl.className = 'text-green-600';
+                e.target.reset();
+            } else {
+                msgEl.textContent = data.error || 'Error registering student';
+                msgEl.className = 'text-red-600';
+            }
+        });
+
+        // Top-up wallet
+        document.getElementById('topupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentId = document.getElementById('walletStudentId').value;
+            const amount = parseFloat(document.getElementById('topupAmount').value);
+            const res = await fetch(`${apiBase}/students/${studentId}/wallet/topup`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({amount})
+            });
+            const data = await res.json();
+            const msgEl = document.getElementById('topupMessage');
+            if (res.ok) {
+                msgEl.textContent = `Wallet topped up successfully. New balance: $${data.wallet_balance.toFixed(2)}`;
+                msgEl.className = 'text-green-600';
+                e.target.reset();
+            } else {
+                msgEl.textContent = data.error || 'Error topping up wallet';
+                msgEl.className = 'text-red-600';
+            }
+        });
+
+        // Submit print job
+        document.getElementById('printJobForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentId = document.getElementById('printStudentId').value;
+            const documentName = document.getElementById('documentName').value;
+            const pages = parseInt(document.getElementById('pages').value);
+            const cost = parseFloat(document.getElementById('cost').value);
+            const res = await fetch(`${apiBase}/printjobs`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({student_id: studentId, document_name: documentName, pages, cost})
+            });
+            const data = await res.json();
+            const msgEl = document.getElementById('printJobMessage');
+            if (res.ok) {
+                msgEl.textContent = 'Print job submitted successfully!';
+                msgEl.className = 'text-green-600';
+                e.target.reset();
+            } else {
+                msgEl.textContent = data.error || 'Error submitting print job';
+                msgEl.className = 'text-red-600';
+            }
+        });
+    </script>
+</body>
+</html>
